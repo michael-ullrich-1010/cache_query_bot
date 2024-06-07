@@ -26,12 +26,6 @@ locals {
   resource_tags = var.resource_tags
 }
 
-locals {
-  # Load and decode the JSON content
-  validation_py = file("../../lambda-files/python/acai/cache_query/validate_query.py")
-  helper_py = file("../../lambda-files/python/acai/cache_query/helper.py")
-  wiki_md = file("../../wiki.md")
-}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # ¦ MODULE
@@ -40,7 +34,8 @@ locals {
 module "llm_backend" {
   #checkov:skip=CKV_TF_1: Currently version-tags are used
   #checkov:skip=CKV_AWS_50
-  source = "git::https://github.com/acai-consulting/terraform-aws-lambda.git/?ref=fix/injection2"
+  source  = "acai-consulting/lambda/aws"
+  version = "1.3.4"
 
   lambda_settings = {
     function_name = var.settings.lambda_name
@@ -55,11 +50,7 @@ module "llm_backend" {
     handler = "main.lambda_handler"
     package = {
       source_path = "${path.module}/lambda-files"
-      files_to_inject = {
-        "/acai/cache_query/validate_query.py" : local.validation_py
-        "/acai/cache_query/helper.py" : local.helper_py
-        "/wiki.md" : local.wiki_md
-      }    }
+    }
     tracing_mode = var.lambda_settings.tracing_mode
     environment_variables = {
       LOG_LEVEL                = var.lambda_settings.log_level
